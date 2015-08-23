@@ -24,7 +24,7 @@ set libs=%libs%;lib\h2-1.4.187.jar;lib\spring-tx-3.2.13.RELEASE.jar
 rem db transaction support aop
 set libs=%libs%;lib\spring-aop-3.2.13.RELEASE.jar;lib\aopalliance.jar
 
-javac -cp %libs% -d build src\*.java
+"%java_home%\bin\javac" -cp %libs% -d build src\*.java
 if errorlevel 1 exit
 
 copy db\init.sql build
@@ -32,8 +32,8 @@ copy log4j.xml build
 copy context.xml build
 copy h2db.properties build
 
-jar cvfe main.jar Test -C build .
+"%java_home%\bin\jar" cvfe main.jar Test -C build .
 
 echo on
 
-java -cp %libs%;main.jar Test %*
+"%java_home%\bin\java" -cp %libs%;main.jar Test %*

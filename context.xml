@@ -8,6 +8,12 @@
                            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd">
 
   <bean id="test" class="Test">
+      <property name="printer">
+        <bean class="Printer">
+          <property name="dataSource" ref="dataSource"/>
+        </bean>
+      </property>
+
       <property name="commands">
         <map>
           <entry>
@@ -64,5 +70,4 @@
   </bean>
 
   <tx:annotation-driven transaction-manager="txManager"/>
-
 </beans>

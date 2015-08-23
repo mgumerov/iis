@@ -21,23 +21,28 @@ public class Test {
     final FileSystemXmlApplicationContext context;
     try {
       context = new FileSystemXmlApplicationContext("context.xml");
-      context.registerShutdownHook();
-      final Test test = context.getBean("test", Test.class);
-      test.run(args);
+      try {
+        context.registerShutdownHook();
+        final Test test = context.getBean("test", Test.class);
+        test.run(args);
+      } finally {
+        context.close();
+      }
     }
     catch (Exception e) {
       final String errMsg = "Failure: " + e.getMessage();
       log.error(errMsg, e);
       System.err.println(errMsg);
-      return;
     }
-    context.close();
   }
 
   private Map<Option, Command> commands;
   public void setCommands(final Map<Option, Command> commands) { this.commands = commands; }
 
-  private void run(final String[] args) throws Exception {
+  private Printer printer;
+  public void setPrinter(final Printer printer) { this.printer = printer; }
+
+  private void run(final String[] args) {
     final CommandLine commandLine;
     final Options posixOptions;
     try {
@@ -63,12 +68,18 @@ public class Test {
       return;
     }
 
-    for (final Option option : cmdLineOptions) {
-      if (commandLine.hasOption(option.getOpt())) {
-        log.info(option.toString());
-        final String[] arguments = commandLine.getOptionValues(option.getOpt());
-        commands.get(option).execute(arguments);
+    try {
+      for (final Option option : cmdLineOptions) {
+        if (commandLine.hasOption(option.getOpt())) {
+          log.info(option.toString());
+          final String[] arguments = commandLine.getOptionValues(option.getOpt());
+          commands.get(option).execute(arguments);
+        }
       }
+    } catch (Exception e) {
+      log.error(e.getMessage(), e);
+      System.err.println(e.getMessage());
     }
+    printer.printout();
   }
 }

@@ -7,3 +7,4 @@ CREATE TABLE DATA (
 );
 
 insert into DATA (DepCode, DepJob, Description) values('DC1', 'DJ1', 'DJ1D');
+insert into DATA (DepCode, DepJob, Description) values('DC2', 'DJ2', null);
