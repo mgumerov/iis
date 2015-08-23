@@ -1,6 +1,7 @@
 @echo off
 
 del /q /s build
+md build
 
 rem spring core
 set libs=lib\spring-context-3.2.13.RELEASE.jar;lib\spring-beans-3.2.13.RELEASE.jar;lib\spring-core-3.2.13.RELEASE.jar
@@ -19,6 +20,9 @@ set libs=%libs%;lib\commons-cli-1.2.jar
 
 rem db
 set libs=%libs%;lib\h2-1.4.187.jar;lib\spring-tx-3.2.13.RELEASE.jar
+
+rem db transaction support aop
+set libs=%libs%;lib\spring-aop-3.2.13.RELEASE.jar;lib\aopalliance.jar
 
 javac -cp %libs% -d build src\*.java
 if errorlevel 1 exit

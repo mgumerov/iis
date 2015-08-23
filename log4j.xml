@@ -23,6 +23,10 @@
     <level value="INFO"/>
   </logger>
 
+  <logger name="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+    <level value="ALL"/>
+  </logger>
+
   <root>
     <level value="ALL"/>
     <appender-ref ref="PRIMARY"/>
