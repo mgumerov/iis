@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans   http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd">
+
+  <bean id="test" class="Test">
+      <property name="commands">
+        <map>
+          <entry>
+            <key>
+                <bean class="org.apache.commons.cli.Option">
+                  <constructor-arg type="java.lang.String" value="l"/>
+                  <constructor-arg type="java.lang.String" value="Load DB from XML file"/>
+                  <property name="args" value="1"/>
+                  <property name="argName" value="xml-input-file-name"/>
+                  <property name="longOpt" value="load"/>
+                </bean>
+            </key>
+            <bean class="LoadCommand">
+            </bean>
+          </entry>
+          <entry>
+            <key>
+                <bean class="org.apache.commons.cli.Option">
+                  <constructor-arg type="java.lang.String" value="d"/>
+                  <constructor-arg type="java.lang.String" value="Dump DB to XML file"/>
+                  <property name="args" value="1"/>
+                  <property name="argName" value="xml-output-file-name"/>
+                  <property name="longOpt" value="dump"/>
+                </bean>
+            </key>
+            <bean class="DumpCommand">
+              <property name="dataSource" ref="dataSource"/>
+            </bean>
+          </entry>
+        </map>
+      </property>
+  </bean>
+
+  <bean id="dataSource" class="org.springframework.jdbc.datasource.SingleConnectionDataSource">
+      <property name="driverClassName" value="org.h2.Driver"/>
+      <property name="url" value="${h2.datasource.url}"/>
+      <property name="username" value="root"/>
+      <property name="password" value=""/>
+  </bean>
+
+  <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+     <property name="locations">
+         <list>
+             <value>classpath:h2db.properties</value>
+         </list>
+     </property>
+     <property name="ignoreResourceNotFound" value="false"/>
+     <property name="ignoreUnresolvablePlaceholders" value="false"/>
+  </bean>
+
+</beans>
