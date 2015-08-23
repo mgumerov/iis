@@ -3,6 +3,7 @@ class NatKey {
   private final String depJob;
 
   public NatKey(final String depCode, final String depJob) {
+    if (depCode == null || depJob == null) throw new NullPointerException("Natural key cannot contain null values");
     this.depCode = depCode;
     this.depJob = depJob;
   }

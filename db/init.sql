@@ -1,7 +1,7 @@
 CREATE TABLE DATA (
   ID NUMBER auto_increment,
-  DepCode VARCHAR2(20 char),
-  DepJob VARCHAR2(100 char),
+  DepCode VARCHAR2(20 char) NOT NULL,
+  DepJob VARCHAR2(100 char) NOT NULL,
   Description VARCHAR2(255),
   CONSTRAINT pk_data                 PRIMARY KEY (ID)
 );
