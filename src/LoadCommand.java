@@ -1,9 +1,12 @@
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Collection;
 import java.util.Collections;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.sql.DataSource;
+import java.sql.PreparedStatement;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,17 +19,16 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import org.springframework.transaction.annotation.Transactional;
 
 public class LoadCommand implements Command {
   private static final Logger log = LoggerFactory.getLogger(DumpCommand.class);
 
-  private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+  private JdbcTemplate jdbcTemplate;
   public void setDataSource(final DataSource dataSource) {
-    this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
+    this.jdbcTemplate = new JdbcTemplate(dataSource);
   }
 
   @Override
@@ -36,13 +38,13 @@ public class LoadCommand implements Command {
   }
 
   private class Record {
-    private final NatKey key;
-    public NatKey getKey() { return key; }
+    private final NatKey natKey;
+    public NatKey getNatKey() { return natKey; }
     private final String description;
     public String getDescription() { return description; }
 
-    public Record(final NatKey key, final String description) {
-      this.key = key;
+    public Record(final NatKey natKey, final String description) {
+      this.natKey = natKey;
       this.description = description;
     }
   }
@@ -72,33 +74,39 @@ public class LoadCommand implements Command {
       }
     }
 
-    namedParameterJdbcTemplate.query("SELECT DepCode, DepJob, ID FROM Data",
-                                     Collections.<String,String>emptyMap(),
+    //For batches we have to store separate lists
+    final Collection<Integer> deletes = new ArrayList<Integer>(); //печаль... но не array же заводить сразу с запасом, плюс счетчик? некрасиво
+    final Map<Integer,Record> updates = new HashMap<Integer,Record>(); //и тут тоже неохота новую структуру заводить
+
+    jdbcTemplate.query("SELECT DepCode, DepJob, ID FROM Data",
+                                     (Object[])null,
                                      (ResultSet rs) -> { //RowCallbackHandler
                                        final NatKey key = new NatKey(rs.getString(1), rs.getString(2));
-                                       final int id = rs.getInt(3);
-                                       if (newData.containsKey(key)) {
-                                         log.debug("Updating: " + key);
-                                         final Map<String, String> params = new HashMap<String, String>();
-                                         params.put("id", String.valueOf(id));
-                                         params.put("descr", newData.get(key).getDescription());
-                                         namedParameterJdbcTemplate.update("UPDATE DATA SET Description = :descr where ID = :id", params);
-                                       } else {
-                                         log.debug("Deleting: " + key);
-                                         namedParameterJdbcTemplate.update("DELETE FROM DATA where ID = :id", Collections.<String,String>singletonMap("id", String.valueOf(id)));
-                                       }
+                                       final Integer id = rs.getInt(3);
+                                       final Record item = newData.get(key); //map's values are non-null
+                                       if (item != null)
+                                         updates.put(id, item);
+                                       else
+                                         deletes.add(id);
                                        newData.remove(key);
                                      });
 
+    final Collection<Record> inserts = newData.values(); //осталось то, чего не было в Ѕƒ
 
-    {    
-      final Map<String, String> params = new HashMap<String, String>();
-      for (final Record record : newData.values()) {
-        params.put("dc", record.getKey().getDepCode());
-        params.put("dj", record.getKey().getDepJob());
-        params.put("dd", record.getDescription());
-        namedParameterJdbcTemplate.update("INSERT INTO DATA(DepCode, DepJob, Description) VALUES(:dc,:dj,:dd)", params);
-      }
-    }
+    jdbcTemplate.batchUpdate("DELETE FROM DATA WHERE ID=?", deletes, 2,
+                             (final PreparedStatement ps, final Integer value) -> ps.setInt(1, value.intValue()) );
+
+    jdbcTemplate.batchUpdate("UPDATE DATA SET Description = ? where ID = ?", updates.entrySet(), 2,
+                             (final PreparedStatement ps, final Map.Entry<Integer,Record> entry) -> {
+                                 ps.setInt(2, entry.getKey());
+                                 ps.setString(1, entry.getValue().getDescription());
+                             });
+
+    jdbcTemplate.batchUpdate("INSERT INTO DATA(DepCode, DepJob, Description) VALUES(?,?,?)", inserts, 2,
+                             (final PreparedStatement ps, final Record record) -> {
+                                 ps.setString(1, record.getNatKey().getDepCode());
+                                 ps.setString(2, record.getNatKey().getDepJob());
+                                 ps.setString(3, record.getDescription());
+                             });
   }
 }
