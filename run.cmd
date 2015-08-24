@@ -30,6 +30,7 @@ if errorlevel 1 exit
 "%java_home%\bin\javadoc" -sourcepath src src/*.java -d jdoc >nul 2>nul
 
 copy db\init.sql build
+copy data.xsd build
 copy log4j.xml build
 copy context.xml build
 copy h2db.properties build

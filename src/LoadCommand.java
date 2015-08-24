@@ -15,9 +15,13 @@ import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -33,6 +37,12 @@ public class LoadCommand implements Command {
   private JdbcTemplate jdbcTemplate;
   public void setDataSource(final DataSource dataSource) {
     this.jdbcTemplate = new JdbcTemplate(dataSource);
+  }
+
+  private Schema schema;
+  public void setSchema(final Resource schemaResource) throws java.io.IOException, org.xml.sax.SAXException {
+    final SchemaFactory sf = SchemaFactory.newInstance(javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI);
+    schema = sf.newSchema(new StreamSource(schemaResource.getInputStream()));
   }
 
   /** 
@@ -59,8 +69,12 @@ public class LoadCommand implements Command {
 
   private void load(final String filename) throws Exception {
     log.info("Loading from: " + filename);
+
     final DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+    docFactory.setSchema(schema);
+
     final DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+
     final Document doc = docBuilder.parse(filename);
 
     final Element nDataset = (Element)doc.getChildNodes().item(0);

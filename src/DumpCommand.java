@@ -12,6 +12,9 @@ import org.w3c.dom.Element;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -19,6 +22,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.OutputKeys;
 
+import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -35,6 +39,12 @@ public class DumpCommand implements Command {
     this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
   }
 
+  private Schema schema;
+  public void setSchema(final Resource schemaResource) throws java.io.IOException, org.xml.sax.SAXException {
+    final SchemaFactory sf = SchemaFactory.newInstance(javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI);
+    schema = sf.newSchema(new StreamSource(schemaResource.getInputStream()));
+  }
+
   /**
    * {@inheritDoc}
    * @param args [0] = имя выходного XML-файла
@@ -44,7 +54,9 @@ public class DumpCommand implements Command {
     final String filename = args[0];
 
     final DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+
     final DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+
     final Document doc = docBuilder.newDocument();
     final Element rootElement = doc.createElement("dataset");
     doc.appendChild(rootElement);
@@ -61,11 +73,13 @@ public class DumpCommand implements Command {
         rootElement.appendChild(datarow);
       });
 
+    final DOMSource source = new DOMSource(doc);
+    schema.newValidator().validate(source);
+
     final TransformerFactory transformerFactory = TransformerFactory.newInstance();
     final Transformer transformer = transformerFactory.newTransformer();
     transformer.setOutputProperty(OutputKeys.INDENT, "yes");
     transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-    final DOMSource source = new DOMSource(doc);
     final StreamResult result = new StreamResult(new java.io.File(filename));
     transformer.transform(source, result);
   }
