@@ -27,6 +27,8 @@ set libs=%libs%;lib\spring-aop-3.2.13.RELEASE.jar;lib\aopalliance.jar
 "%java_home%\bin\javac" -cp %libs% -d build src\*.java
 if errorlevel 1 exit
 
+"%java_home%\bin\javadoc" -sourcepath src src/*.java -d jdoc >nul 2>nul
+
 copy db\init.sql build
 copy log4j.xml build
 copy context.xml build

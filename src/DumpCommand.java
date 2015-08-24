@@ -23,7 +23,10 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 
-
+/** 
+ * Команда выгрузки из DB в XML
+ * @see Command
+ */
 public class DumpCommand implements Command {
   private static final Logger log = LoggerFactory.getLogger(DumpCommand.class);
 
@@ -32,6 +35,10 @@ public class DumpCommand implements Command {
     this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
   }
 
+  /**
+   * {@inheritDoc}
+   * @param args [0] = имя выходного XML-файла
+   */
   @Override
   public void execute(final String[] args) throws Exception {
     final String filename = args[0];

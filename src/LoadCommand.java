@@ -23,6 +23,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import org.springframework.transaction.annotation.Transactional;
 
+/** 
+ * Команда загрузки в DB из XML
+ * @see Command
+ */
 public class LoadCommand implements Command {
   private static final Logger log = LoggerFactory.getLogger(DumpCommand.class);
 
@@ -31,6 +35,10 @@ public class LoadCommand implements Command {
     this.jdbcTemplate = new JdbcTemplate(dataSource);
   }
 
+  /** 
+   * {@inheritDoc}
+   * @param args [0] = имя входного XML-файла
+   */
   @Override
   @Transactional
   public void execute(final String[] args) throws Exception {
